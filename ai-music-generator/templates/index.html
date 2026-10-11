@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Music Generator</title>
+    <meta name="description" content="Generate original instrumental music using Deep Learning AI">
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- MIDI Player dependencies (Tone.js, Magenta core, html-midi-player) -->
+    <script src="https://cdn.jsdelivr.net/combine/npm/tone@14.7.58,npm/@magenta/music@1.23.1/es6/core.js,npm/focus-visible@5,npm/html-midi-player@1.5.0"></script>
+</head>
+<body>
+    <!-- Relaxing Animated Background -->
+    <div class="animated-bg">
+        <div class="orb"></div>
+        <div class="orb"></div>
+        <div class="orb"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="logo">
+                <i class="fa-solid fa-music"></i>
+                <span>Harmonix.AI</span>
+            </div>
+            
+            <div class="nav-links">
+                <a href="#" class="active" id="nav-create"><i class="fa-solid fa-wand-magic-sparkles"></i> Create</a>
+                <a href="#" id="nav-history"><i class="fa-solid fa-clock-rotate-left"></i> History</a>
+                <a href="#" id="nav-favorites"><i class="fa-solid fa-heart"></i> Favorites</a>
+                <a href="#" id="nav-youtube"><i class="fa-brands fa-youtube"></i> YouTube Music</a>
+            </div>
+            
+            <div class="sidebar-footer">
+                <p>AI Music Gen v1.0</p>
+                <p>LSTM Deep Learning</p>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header>
+                <h1>Generate Original Music</h1>
+                <p class="subtitle">Select your parameters and let the AI compose a unique instrumental piece.</p>
+            </header>
+
+            <!-- Create Section -->
+            <section id="section-create" class="content-section active">
+                <div class="generator-panel">
+                    <form id="generate-form">
+                        <div class="control-grid">
+                            <div class="control-group">
+                                <label for="genre">Genre</label>
+                                <select id="genre" name="genre">
+                                    <option value="Classical">Classical</option>
+                                    <option value="Jazz">Jazz</option>
+                                    <option value="Pop">Pop</option>
+                                    <option value="Lo-fi">Lo-fi</option>
+                                </select>
+                            </div>
+                            
+                            <div class="control-group">
+                                <label for="mood">Mood</label>
+                                <select id="mood" name="mood">
+                                    <option value="Happy">Happy</option>
+                                    <option value="Sad">Sad</option>
+                                    <option value="Calm">Calm</option>
+                                    <option value="Energetic">Energetic</option>
+                                </select>
+                            </div>
+
+                            <div class="control-group">
+                                <label for="instrument">Primary Instrument</label>
+                                <select id="instrument" name="instrument">
+                                    <option value="Piano">Acoustic Piano</option>
+                                    <option value="Guitar">Acoustic Guitar</option>
+                                    <option value="Synth">Synthesizer</option>
+                                    <option value="Strings">Strings Ensemble</option>
+                                </select>
+                            </div>
+
+                            <div class="control-group">
+                                <label for="duration">Duration (seconds)</label>
+                                <input type="number" id="duration" name="duration" value="15" min="5" max="60">
+                            </div>
+
+                            <div class="control-group full-width slider-group">
+                                <label for="tempo">Tempo (BPM): <span id="tempo-val">120</span></label>
+                                <input type="range" id="tempo" name="tempo" min="60" max="180" value="120">
+                            </div>
+                        </div>
+
+                        <button type="submit" id="generate-btn" class="primary-btn">
+                            <span class="btn-text">Generate Music</span>
+                            <div class="loader hidden"></div>
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Player Section (Hidden until generated) -->
+                <div id="player-container" class="player-container hidden">
+                    <div class="player-header">
+                        <h2 id="current-track-title">Generated Track</h2>
+                        <div class="player-actions">
+                            <a href="#" id="download-midi-btn" class="icon-btn" title="Download MIDI"><i class="fa-solid fa-download"></i> MIDI</a>
+                        </div>
+                    </div>
+                    
+                    <div class="visualizer-wrapper">
+                        <midi-visualizer type="piano-roll" id="myVisualizer"></midi-visualizer>
+                    </div>
+                    
+                    <div class="custom-player">
+                        <midi-player
+                            id="myPlayer"
+                            sound-font visualizer="#myVisualizer">
+                        </midi-player>
+                    </div>
+                </div>
+            </section>
+
+            <!-- History Section -->
+            <section id="section-history" class="content-section">
+                <h2>Generated History</h2>
+                <div class="library-grid" id="history-grid">
+                    <!-- Tracks will be loaded here dynamically -->
+                    <div class="loading-state">Loading history...</div>
+                </div>
+            </section>
+
+            <!-- Favorites Section -->
+            <section id="section-favorites" class="content-section">
+                <h2>Your Favorite Tracks</h2>
+                <p class="subtitle" style="margin-bottom: 1.5rem;">Your saved masterpieces stored in a special place.</p>
+                <div class="library-grid" id="favorites-grid">
+                    <!-- Tracks will be loaded here dynamically -->
+                    <div class="loading-state">Loading favorites...</div>
+                </div>
+            </section>
+
+            <!-- YouTube Section -->
+            <section id="section-youtube" class="content-section">
+                <h2>Stream YouTube Music</h2>
+                <p class="subtitle" style="margin-bottom: 1.5rem;">Listen to your favorite tracks alongside your generated music.</p>
+                <div class="generator-panel" style="margin-bottom: 2rem;">
+                    <div class="control-group">
+                        <label for="yt-url">Paste YouTube URL</label>
+                        <div style="display: flex; gap: 1rem; margin-top: 0.5rem; align-items: stretch;">
+                            <input type="text" id="yt-url" placeholder="https://www.youtube.com/watch?v=..." style="flex-grow: 1; background: rgba(0,0,0,0.2); border: 1px solid var(--border); color: white; padding: 0.8rem 1rem; border-radius: 8px; font-family: var(--font-body); font-size: 1rem;">
+                            <button id="load-yt-btn" class="primary-btn" style="width: auto; border-radius: 8px;">Load Video</button>
+                            <button id="save-yt-btn" class="icon-btn hidden" title="Save to Favorites" style="border-radius: 8px; padding: 0 1.5rem; background: var(--surface-hover); color: #f80759; border-color: #f80759;"><i class="fa-solid fa-heart fa-lg"></i></button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="yt-player-container" class="player-container hidden" style="padding: 0;">
+                    <iframe id="yt-iframe" width="100%" height="450" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius: var(--radius); border: none; display: block;"></iframe>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Edit Title Modal -->
+    <div id="edit-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Rename Track</h2>
+            <input type="text" id="edit-title-input" class="modal-input">
+            <button id="save-title-btn" class="primary-btn">Save</button>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

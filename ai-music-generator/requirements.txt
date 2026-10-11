@@ -1,0 +1,6 @@
+Flask
+Flask-SQLAlchemy
+music21
+tensorflow>=2.16.0
+numpy
+midi2audio
